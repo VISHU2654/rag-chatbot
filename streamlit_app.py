@@ -15,6 +15,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "backend", ".env"))
 try:
     from services.llm_service import get_llm
     from services.rag_service import retrieve
+    from services.image_service import generate_image
     from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
     from langchain.agents import create_tool_calling_agent, AgentExecutor
     from langchain_core.tools import tool
@@ -136,20 +137,43 @@ st.markdown("Ask anything about your documents, or just chat with the AI!")
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+        if "image_b64" in message:
+            import base64
+            st.image(base64.b64decode(message["image_b64"]))
         if message.get("sources"):
             with st.expander("View Sources"):
                 for src in message["sources"]:
                     st.write(f"- {src}")
 
 # Handle Chat Input
-if prompt := st.chat_input("Ask a question..."):
+if prompt := st.chat_input("Ask a question or type /imagine <prompt>..."):
     # Display user message
     st.chat_message("user").markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # Assistant Response Container
-    with st.chat_message("assistant"):
-        response_placeholder = st.empty()
+    is_imagine = prompt.lower().startswith("/imagine ")
+    if is_imagine:
+        image_prompt = prompt[9:].strip()
+        with st.chat_message("assistant"):
+            with st.spinner("Generating image..."):
+                result = generate_image(image_prompt, provider="pollinations")
+                if "error" in result:
+                    st.error(result["error"])
+                    st.session_state.messages.append({"role": "assistant", "content": f"Error: {result['error']}"})
+                else:
+                    import base64
+                    b64 = result["image_data"]
+                    st.image(base64.b64decode(b64), caption=image_prompt)
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": f"Here is your image for: {image_prompt}",
+                        "image_b64": b64
+                    })
+
+    if not is_imagine:
+        # Assistant Response Container
+        with st.chat_message("assistant"):
+            response_placeholder = st.empty()
         
         # 1. Retrieve Documents Natively
         sources_used = []
