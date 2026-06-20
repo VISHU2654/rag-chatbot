@@ -14,7 +14,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "backend", ".env"))
 # Import services
 try:
     from services.llm_service import get_llm
-    from services.rag_service import retrieve, process_document
+    from services.rag_service import retrieve
     from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
     from langchain.agents import create_tool_calling_agent, AgentExecutor
     from langchain_core.tools import tool
@@ -22,6 +22,25 @@ try:
 except ImportError as e:
     st.error(f"Failed to import backend services: {e}")
     st.stop()
+
+def process_document(file_path: str, filename: str, user_id: int | None = None) -> dict:
+    """Load, split, and add document chunks to the vector store."""
+    try:
+        from services.loader_service import load_document, split_documents
+        from services.rag_service import add_documents
+        from config import config
+        from pathlib import Path
+        
+        suffix = Path(filename).suffix.lower()
+        docs = load_document(file_path, suffix)
+        for d in docs:
+            d.metadata["source"] = filename
+            
+        chunks = split_documents(docs, config.CHUNK_SIZE, config.CHUNK_OVERLAP)
+        add_documents(chunks, user_id=user_id)
+        return {"message": "Success"}
+    except Exception as e:
+        return {"error": str(e)}
 
 # --- Tools ---
 @tool
@@ -89,7 +108,7 @@ with st.sidebar:
                         tmp_path = tmp.name
                     
                     # Process it using backend service
-                    result = process_document(tmp_path, user_id=None)
+                    result = process_document(tmp_path, uploaded_file.name, user_id=None)
                     
                     # Clean up
                     os.unlink(tmp_path)
