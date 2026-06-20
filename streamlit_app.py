@@ -181,9 +181,10 @@ if prompt := st.chat_input("Ask a question..."):
             tools = [calculate, search_web, search_documents]
             
             agent_prompt = ChatPromptTemplate.from_messages([
-                ("system", "You are NexusAI, a powerful AI assistant. Answer the user's question. "
-                           "You have access to tools for Math, Web Search, and Document Search. "
-                           "Only call these tools if absolutely necessary. DO NOT hallucinate tools."),
+                ("system", "You are a helpful AI assistant. Use the provided tools to answer the user's questions. "
+                           "If asked for factual information, current events, or general knowledge, use the search_web tool. "
+                           "If asked to do math, use the calculate tool. "
+                           "If asked about user documents, use the search_documents tool."),
                 # Simplified history for Streamlit (just passing messages directly)
                 ("placeholder", "{chat_history}"),
                 ("user", "{input}"),
