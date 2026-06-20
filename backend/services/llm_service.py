@@ -15,12 +15,13 @@ def get_llm(provider: str | None = None, streaming: bool = False):
     prov = (provider or config.LLM_PROVIDER).strip().lower()
 
     if prov == LLMProvider.GROQ:
-        from langchain_groq import ChatGroq
-        return ChatGroq(
+        from langchain_openai import ChatOpenAI
+        return ChatOpenAI(
             model=config.GROQ_MODEL,
             temperature=0.2,
             streaming=streaming,
             api_key=config.GROQ_API_KEY,
+            base_url="https://api.groq.com/openai/v1"
         )
 
     elif prov == LLMProvider.GROK:
