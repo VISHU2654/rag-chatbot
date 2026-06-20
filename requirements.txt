@@ -36,4 +36,5 @@ fpdf2>=2.8.0
 
 # === Agents & Tools ===
 duckduckgo-search>=6.0.0
-numexpr>=2.10.0streamlit>=1.30.0
+numexpr>=2.10.0
+streamlit>=1.30.0
