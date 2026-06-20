@@ -151,54 +151,38 @@ if prompt := st.chat_input("Ask a question..."):
     with st.chat_message("assistant"):
         response_placeholder = st.empty()
         
-        # 1. Setup Custom Document Retrieval Tool
+        # 1. Retrieve Documents Natively
         sources_used = []
-        chunks_used = []
-        
-        @tool
-        def search_documents(query: str) -> str:
-            """Search the user's uploaded documents. Always use this tool if the user asks about their files, documents, or knowledge base."""
+        try:
+            llm = get_llm(provider=selected_model, streaming=True)
+            
             retrieved = retrieve(
-                query=query,
+                query=prompt,
                 k=rag_k,
                 use_hybrid=use_hybrid,
                 use_reranker=use_reranker,
                 user_id=None,
             )
-            if not retrieved:
-                return "No relevant documents found."
             
-            for d in retrieved:
-                if d["source"] not in sources_used:
-                    sources_used.append(d["source"])
-                chunks_used.append({"content": d["content"][:200], "source": d["source"], "score": d.get("score", 0)})
-                
-            return "\n\n".join([f"[Source: {d['source']}]\n{d['content']}" for d in retrieved])
-
-        # 2. Setup Agent
-        try:
-            llm = get_llm(provider=selected_model, streaming=True)
-            tools = [calculate, search_web, search_documents]
+            context_str = ""
+            if retrieved:
+                for d in retrieved:
+                    if d["source"] not in sources_used:
+                        sources_used.append(d["source"])
+                context_str = "\n\n".join([f"[Source: {d['source']}]\n{d['content']}" for d in retrieved])
+            
+            # 2. Setup Chain
+            system_prompt = "You are NexusAI, a helpful AI assistant. Answer the user's question."
+            if context_str:
+                system_prompt += f"\n\nUse the following retrieved documents to answer the question:\n\n{context_str}"
             
             agent_prompt = ChatPromptTemplate.from_messages([
-                ("system", "You are a helpful AI assistant. Use the provided tools to answer the user's questions. "
-                           "If asked for factual information, current events, or general knowledge, use the search_web tool. "
-                           "If asked to do math, use the calculate tool. "
-                           "If asked about user documents, use the search_documents tool."),
-                # Simplified history for Streamlit (just passing messages directly)
+                ("system", system_prompt),
                 ("placeholder", "{chat_history}"),
                 ("user", "{input}"),
-                ("placeholder", "{agent_scratchpad}"),
             ])
             
-            agent = create_tool_calling_agent(llm, tools, agent_prompt)
-            agent_executor = AgentExecutor(
-                agent=agent, 
-                tools=tools, 
-                verbose=True, 
-                handle_parsing_errors=True,
-                max_iterations=5
-            )
+            chain = agent_prompt | llm
             
             # Format chat history for LangChain
             formatted_history = []
@@ -213,19 +197,14 @@ if prompt := st.chat_input("Ask a question..."):
             def stream_agent():
                 full_reply = ""
                 try:
-                    for chunk in agent_executor.stream({
+                    for chunk in chain.stream({
                         "input": prompt,
                         "chat_history": formatted_history,
                     }):
-                        if "actions" in chunk:
-                            for action in chunk["actions"]:
-                                yield f"\n*(Using tool: {action.tool}...)*\n\n"
-                        elif "output" in chunk:
-                            text = chunk["output"]
-                            # Streamlit expects chunks to be yielded
-                            # We'll just yield the whole block, Streamlit writes it immediately
-                            full_reply = text
-                            yield text
+                        # Standard LCEL chain stream yields AIMessageChunks
+                        text = chunk.content
+                        full_reply += text
+                        yield text
                             
                     st.session_state.messages.append({"role": "assistant", "content": full_reply, "sources": sources_used})
                 except Exception as e:
