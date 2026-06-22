@@ -1,6 +1,17 @@
 # NexusAI — Intelligent Document Assistant
 
+🚀 **Live Demo:** [NexusAI on Streamlit](https://rag-chatbot-hqt58xebmnk7flmdfeq99m.streamlit.app/)
+
 A powerful RAG (Retrieval-Augmented Generation) chatbot with multi-model AI support, advanced hybrid search, image generation, streaming responses, and a premium dark-mode UI.
+
+## 📸 Screenshots
+
+*(Please add your screenshots to a `screenshots` folder and rename the paths below!)*
+
+<div align="center">
+  <img src="screenshots/app_screenshot1.png" alt="NexusAI Interface" width="45%">
+  <img src="screenshots/app_screenshot2.png" alt="NexusAI Chat" width="45%">
+</div>
 
 ## ✨ Features
 

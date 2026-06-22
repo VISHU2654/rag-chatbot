@@ -38,6 +38,11 @@ def process_document(file_path: str, filename: str, user_id: int | None = None) 
             d.metadata["source"] = filename
             
         chunks = split_documents(docs, config.CHUNK_SIZE, config.CHUNK_OVERLAP)
+        
+        # Filter out complex metadata (like dicts) to prevent upsert errors in vector stores
+        from langchain_community.vectorstores.utils import filter_complex_metadata
+        chunks = filter_complex_metadata(chunks)
+        
         add_documents(chunks, user_id=user_id)
         return {"message": "Success"}
     except Exception as e:
