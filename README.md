@@ -6,11 +6,13 @@ A powerful RAG (Retrieval-Augmented Generation) chatbot with multi-model AI supp
 
 ## 📸 Screenshots
 
-*(Please add your screenshots to a `screenshots` folder and rename the paths below!)*
-
 <div align="center">
-  <img src="screenshots/app_screenshot1.png" alt="NexusAI Interface" width="45%">
-  <img src="screenshots/app_screenshot2.png" alt="NexusAI Chat" width="45%">
+  <img src="screenshot/Screenshot 2026-06-22 135301.png" alt="NexusAI Screenshot 1" width="45%">
+  <img src="screenshot/Screenshot 2026-06-22 140405.png" alt="NexusAI Screenshot 2" width="45%">
+</div>
+<div align="center" style="margin-top: 10px;">
+  <img src="screenshot/Screenshot 2026-06-22 140431.png" alt="NexusAI Screenshot 3" width="45%">
+  <img src="screenshot/Screenshot 2026-06-22 140502.png" alt="NexusAI Screenshot 4" width="45%">
 </div>
 
 ## ✨ Features
