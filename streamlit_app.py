@@ -127,11 +127,21 @@ with st.sidebar:
                     st.error(f"Ingestion error: {e}")
                     
     st.divider()
-    if st.button("Clear Conversation"):
-        st.session_state.session_id = str(uuid.uuid4())
-        st.session_state.messages = []
-        st.session_state.sources = set()
-        st.rerun()
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Clear Chat"):
+            st.session_state.session_id = str(uuid.uuid4())
+            st.session_state.messages = []
+            st.session_state.sources = set()
+            st.rerun()
+    with col2:
+        if st.button("Clear Docs"):
+            try:
+                from services.rag_service import clear_documents
+                clear_documents(user_id=None)
+                st.success("Vector DB cleared!")
+            except Exception as e:
+                st.error(f"Error clearing: {e}")
 
 
 # --- Main UI ---
